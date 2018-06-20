@@ -1,0 +1,13 @@
+Package: alamode
+Type: Package
+Title: K-Means on Sparse, Binary Data
+Version: 0.1.0
+Author: Eric E. Graves
+Maintainer: Eric E. Graves <gravcon5@gmail.com>
+Description: Implements the K-Modes algorithm exclusively for sparse,
+    binary Matrices.
+License: Proprietary
+Encoding: UTF-8
+LazyData: true
+Depends: Matrix
+RoxygenNote: 6.0.1
