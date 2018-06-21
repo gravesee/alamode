@@ -48,7 +48,7 @@ sparse_kmodes <- function(data, k, iter.max=10, random_modes=FALSE, weighted=TRU
   idf <- nrow(data) / (Matrix::colSums(data) + 1)
 
   ## all clusters start at zero
-  cluster <- numeric(nrow(nodes))
+  cluster <- numeric(nrow(data))
 
   ## random points in data space
   modes <- if (isTRUE(random_modes)) random_sparse_modes_(k, data) else sample_k_modes_(k, data)
