@@ -43,7 +43,7 @@ update_mode_ <- function(k, data, cluster, weighted=TRUE) {
 #' @export
 sparse_kmodes <- function(data, k, iter.max=10, random_modes=FALSE, weighted=TRUE, verbose=TRUE) {
 
-  stopifnot(is(data, "dgTMatrix"))
+  # stopifnot(is(data, "dgTMatrix"))
 
   idf <- nrow(data) / (Matrix::colSums(data) + 1)
 
@@ -67,7 +67,7 @@ sparse_kmodes <- function(data, k, iter.max=10, random_modes=FALSE, weighted=TRU
     iter <- iter + 1
 
     ## update cluster "center"
-    for (i in unique(cluster)) modes[,i] <- update_mode_(i, nodes, cluster, weighted)
+    for (i in unique(cluster)) modes[,i] <- update_mode_(i, data, cluster, weighted)
 
     cluster_new <- apply(data %*% modes, 1, which.max)
 

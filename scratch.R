@@ -1,31 +1,53 @@
 library(isofor)
+library(rulekit)
 
 
-data(mtcars)
+## randomly sample a variable
+## randomly sample a cut point
 
-## randomly "hash" the data using isolation forest
-mod <- iForest(titanic[-1], nt=500, phi=8)
-nodes <- predict(mod, titanic[-1], sparse = TRUE)
+random_val <- function(v) {
+  sample(v, 1L)
+}
 
-# tf <- (nodes / rowSums(nodes))
-# ○idf <-
+random_var <- function(d) {
+  sample(d, 1L)
+}
 
-km <- sparse_kmodes(nodes, k=10, iter.max = 100)
+
+random_partitions <- function(d, depth=1, n=3, pred=NULL) {
+
+  if (depth > n || nrow(d) <= 1L) return(pred)
+
+  var <- random_var(d)
+  val <- random_val(var[[1]])
+
+  if (is.factor(var[[1]])) {
+    pred <- pcat(names(var), "in", as.character(val), all=levels(var[[1]]))
+  } else {
+    pred <- pnum(names(var), "lte", val)
+  }
+
+  ## get true/false
+  bool <- predict(pred, d)
+
+  ## recurse
+  ## go left
+  Reduce("&", list(pred, random_partitions(d[bool,], depth+1, n=n, pred)))
+
+}
+
+
+titanic$Age[is.na(titanic$Age)] <- median(titanic$Age, na.rm=T)
+
+rules <- replicate(500, random_partitions(titanic[-1], depth = 2), simplify = F)
+
+
+nodes <- lapply(unique(rules), predict, titanic, type="sparse")
+nodes <- do.call(cbind, nodes)
+
+nodes <- as(nodes + 0, "dgTMatrix")
+
+km <- sparse_kmodes(nodes, k=10, iter.max = 100, weighted = TRUE)
+
 
 tapply(titanic$Survived, km$cluster, mean)
-
-
-predict(km, nodes)
-
-library(haven)
-
-d <- haven::read_sas("F:/sas-dev/SYNTH1801_0001/data/shell_perf_jefferson.sas7bdat")
-
-## convert chars to facs
-chars <- sapply(d, is.character)
-d[chars] <- lapply(d[chars], factor)
-
-iso <- iForest(d[9:221], nt=500, phi=16)
-nodes <- predict(iso, d[9:221], sparse = TRUE)
-
-km <- sparse_kmodes(nodes, k=10, iter.max = 100)
