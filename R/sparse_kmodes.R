@@ -5,9 +5,9 @@ random_sparse_modes_ <- function(k, data) {
   i <- do.call(c, replicate(k, ceiling(runif(nentries, 0, ncol(data))), simplify = FALSE))
   j <- rep(seq.int(k), each=nentries)
 
-  #Matrix::sparseMatrix(i=i, j=j, dims = c(ncol(data), k), x=rep(1, length(i)))
+  Matrix::sparseMatrix(i=i, j=j, dims = c(ncol(data), k), x=rep(1, length(i)))
 
-  Matrix::sparseMatrix(i=i, j=j, dims = c(ncol(data), k), x=runif(length(i), 0, 1))
+  # Matrix::sparseMatrix(i=i, j=j, dims = c(ncol(data), k), x=runif(length(i), 0, 1))
 }
 
 ## Sample k modes
