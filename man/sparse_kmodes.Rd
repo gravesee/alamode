@@ -6,7 +6,7 @@
 Cluster sparse, binary matrices from the Matrix package}
 \usage{
 sparse_kmodes(data, k, iter.max = 10, random_modes = FALSE,
-  verbose = TRUE)
+  weighted = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{data}{Sparse, binary matrix produced by the Matrix package}
@@ -19,6 +19,9 @@ converges or reaches this limit -- whichever happens first.}
 \item{random_modes}{Should the initial cluster centers be generated randomly?
 The default is to randomly sample k centers from the unique rows of the input
 dataset.}
+
+\item{weighted}{If TRUE, the default, the updated mode centers use the mean
+incidence rate for each column rather than the mode.}
 
 \item{verbose}{Logical for whether to output training progress}
 }
