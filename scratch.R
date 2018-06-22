@@ -9,7 +9,17 @@ kmodes_gower(mtcars, mtcars[c(1,10,25),])
 
 
 km <- kmodes_gower(iris[-5],  3)
+
 table(km$clusters, iris$Species)
+
+## mismatches
+mm <- c("virginica","versicolor", "setosa")[km$clusters] != iris$Species
+
+dists <- predict(km, iris, type="distance")
+
+
+
+
 
 
 

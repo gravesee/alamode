@@ -24,11 +24,15 @@ update_mode.factor <- function(x) {
   factor(levels(x)[which.max(tabulate(x))], levels=levels(x))
 }
 
-calculate_clusters <- function(d, modes) {
+calculate_gower_distance <- function(d, modes) lapply(modes, gower_dist, d)
 
-  dists <- lapply(modes, gower_dist, d)
-
+assign_clusters <- function(dists) {
   apply(do.call(cbind, dists), 1, which.min)
+}
+
+calculate_clusters <- function(d, modes) {
+  dists <- calculate_gower_distance(d, modes)
+  assign_clusters(dists)
 }
 
 
@@ -104,8 +108,26 @@ setMethod(
 
 })
 
+#' Predict KModes Gower Object on New Data
+#' @param object \code{kmodes_gower} object produces by \link{kmodes_gower} function.
+#' @param newdata data.frame on which to predict.
+#' @param type What to predict on the new data. Either the assigned cluster or the distance matrix
+#' containining the distance for each objservation to each cluster mode.
+#' @param normalize a logical value for whether \code{rowSums(dists)} should all equal one.
 #' @export
-predict.kmodes_gower <- function(object, newdata, type=c("cluster", "centers", "distance")) {
-  stop("Implement!")
+predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"), normalize=TRUE) {
+
+  ## check stuff here
+  ## TODO: check_modes_valid()
+
+  dists <- calculate_gower_distance(newdata, object$centers)
+
+  switch(
+    match.arg(type),
+    "cluster" = assign_clusters(dists),
+    "distance" ={
+      mat <- do.call(cbind, dists)
+      if (isTRUE(normalize)) mat/rowSums(mat) else mat
+    })
 }
 
