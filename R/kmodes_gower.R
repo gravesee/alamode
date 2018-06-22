@@ -5,7 +5,7 @@ update_mode.default <- function(x) {
 }
 
 update_mode.data.frame <- function(x) {
-  data.frame(lapply(x, update_mode))
+  data.frame(lapply(x, update_mode), check.names = F, stringsAsFactors = F)
 }
 
 update_mode.numeric <- function(x) {
@@ -17,7 +17,8 @@ update_mode.logical <- function(x) {
 }
 
 update_mode.character <- function(x) {
-  update_mode(factor(x))
+  tbl <- table(x)
+  names(tbl)[which.max(tbl)]
 }
 
 update_mode.factor <- function(x) {
@@ -35,7 +36,6 @@ calculate_clusters <- function(d, modes) {
   assign_clusters(dists)
 }
 
-
 update_modes <- function(d, clusters) {
   modes <- list()
   for (k in unique(clusters)) {
@@ -45,25 +45,37 @@ update_modes <- function(d, clusters) {
   modes
 }
 
-is_single_integer <- function(n) {
-  is.numeric(n) && identical(length(n), 1L) && floor(n) == n
+zeroth_row <- function(d) d[0,]
+
+modes_are_valid <- function(d, modes) {
+  proto <- d[0,]
+  isTRUE(all(sapply(lapply(modes, zeroth_row), identical, proto)))
 }
 
-setGeneric("kmodes_gower", function(data, modes, max.iter=100) standardGeneric("kmodes_gower"))
+dist_to_clusters <- function(d, cluster, modes) {
+  sums <- numeric(length(modes))
+  for (k in seq_along(modes)) {
+    f <- cluster == k
+    sums[[k]] <- sum(suppressWarnings(gower_dist(d[f,], modes[[k]])))
+  }
+  sums
+}
+
+setGeneric("kmodes_gower", function(data, modes, max.iter=100, verbose=TRUE) standardGeneric("kmodes_gower"))
 
 #' @export
 setMethod(
   "kmodes_gower",
   c("data.frame", "numeric"),
-  function(data, modes, max.iter) {
-    kmodes_gower(data, as.integer(modes[[1]]), max.iter)
+  function(data, modes, max.iter, verbose) {
+    kmodes_gower(data, as.integer(modes[[1]]), max.iter, verbose)
   })
 
 #' @export
 setMethod(
   "kmodes_gower",
   c("data.frame", "data.frame"),
-  function(data, modes, max.iter) {
+  function(data, modes, max.iter, verbose) {
     kmodes_gower(data, split(modes, seq.int(nrow(modes))), max.iter)
 })
 
@@ -71,42 +83,64 @@ setMethod(
 setMethod(
   "kmodes_gower",
   c("data.frame", "integer"),
-  function(data, modes, max.iter) {
+  function(data, modes, max.iter, verbose) {
     stopifnot(identical(length(modes), 1L))
     i <- sample(which(!duplicated(data)), modes)
     modes <- split(data[i,], seq.int(modes))
-    kmodes_gower(data, modes, max.iter)
+    kmodes_gower(data, modes, max.iter, verbose)
   })
 
 #' @export
 setMethod(
   "kmodes_gower",
   c("data.frame", "list"),
-  function(data, modes, max.iter) {
+  function(data, modes, max.iter, verbose) {
 
     ## check that list of modes are valid
-    ## TODO: check_modes_valid()
+    if (!modes_are_valid(data, modes)) {
+      stop("`modes`` must all have the same spec as `data`")
+    }
 
-    clusters <- calculate_clusters(data, modes)
+    dists <- calculate_gower_distance(data, modes)
+    clusters <- assign_clusters(dists)
 
+    if (isTRUE(verbose)) cat("Iter   % Changed Cluster", sep = "\n")
+
+    iter <- 1
     repeat {
-
       modes <- update_modes(data, clusters)
-      new_clusters <- calculate_clusters(data, modes)
+      dists <- calculate_gower_distance(data, modes)
+      new_clusters <- assign_clusters(dists)
 
-      if (all(clusters == new_clusters)) break
+      n_changed <- sum(clusters != new_clusters)
+
+      if (isTRUE(verbose)) {
+        cat(sprintf("%3d%19.2f", iter, n_changed*100/length(clusters)), sep = "\n")
+      }
+
+      if (n_changed == 0 || iter >= max.iter) break
 
       clusters <- new_clusters
-
+      iter <- iter + 1
     }
+
+    ## summary stats
+    sum_distance_total <-sum(gower_dist(data, update_mode(data)))
+    distance_within <- dist_to_clusters(data, clusters, modes)
+    sum_distance_within <- sum(distance_within)
 
     structure(
       list(
         clusters = clusters,
-        centers = modes),
+        modes = modes,
+        sum_distance_total = sum_distance_total,
+        sum_distance_within = sum_distance_within,
+        distance_within_cluster = distance_within),
       class = "kmodes_gower")
 
 })
+
+
 
 #' Predict KModes Gower Object on New Data
 #' @param object \code{kmodes_gower} object produces by \link{kmodes_gower} function.
@@ -117,10 +151,11 @@ setMethod(
 #' @export
 predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"), normalize=TRUE) {
 
-  ## check stuff here
-  ## TODO: check_modes_valid()
+  if (!modes_are_valid(newdata, object$modes)) {
+    stop("`modes`` must all have the same spec as `data`")
+  }
 
-  dists <- calculate_gower_distance(newdata, object$centers)
+  dists <- calculate_gower_distance(newdata, object$modes)
 
   switch(
     match.arg(type),
@@ -131,3 +166,23 @@ predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"),
     })
 }
 
+setOldClass("kmodes_gower")
+
+setMethod("show", "kmodes_gower", function(object) {
+
+  sizes <- paste0(table(km$clusters), collapse = ", ")
+  cat(sprintf("K-modes clustering with %d clusters of sizes %s", length(object$modes), sizes), sep="\n")
+
+  modes <- do.call(rbind, object$modes)
+  cat("\nCluster modes:", sep="\n")
+  print(modes)
+
+  cat("\nWithin cluster sum of distances by cluster", sep="\n")
+  print(object$distance_within_cluster)
+
+  pct <- object$sum_distance_within / km$sum_distance_total
+  txt <- sprintf("\n within_dist / total_dist = %4.1f %%)", pct * 100)
+  cat(txt, sep="\n")
+})
+
+print.kmodes_gower <- function(x, ...) show(x)

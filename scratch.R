@@ -4,6 +4,8 @@ data(mtcars)
 ## request number of modes
 km <- kmodes_gower(mtcars, 3L)
 
+plot(mtcars, col=km$clusters)
+
 ## or specify them as a list of data.frame rows
 kmodes_gower(mtcars, mtcars[c(1,10,25),])
 
@@ -21,6 +23,8 @@ dists <- predict(km, iris, type="distance")
 
 
 
+mn <- colMeans(iris[-5])
+sum(sqrt((iris[-5] - mn) ^ 2))
 
 
 
