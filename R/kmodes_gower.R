@@ -1,9 +1,8 @@
-library(gower)
-
-data(titanic, package="onyx")
-
-## update centers
 update_mode <- function(x) UseMethod("update_mode")
+
+update_mode.default <- function(x) {
+  stop("Update methods not implemented for data type:", class(x))
+}
 
 update_mode.data.frame <- function(x) {
   data.frame(lapply(x, update_mode))
@@ -11,6 +10,14 @@ update_mode.data.frame <- function(x) {
 
 update_mode.numeric <- function(x) {
   median(x, na.rm=T)
+}
+
+update_mode.logical <- function(x) {
+  if (mean(x) > 0.5) TRUE else FALSE
+}
+
+update_mode.character <- function(x) {
+  update_mode(factor(x))
 }
 
 update_mode.factor <- function(x) {
@@ -34,53 +41,71 @@ update_modes <- function(d, clusters) {
   modes
 }
 
-
-
-k_modes <- function(d, k) {
-
-  i <- sample.int(nrow(d), k)
-  modes <- split(d[i,], seq.int(k))
-
-  clusters <- calculate_clusters(d, modes)
-
-  repeat {
-
-    modes <- update_modes(d, clusters)
-    new_clusters <- calculate_clusters(d, modes)
-
-    if (all(clusters == new_clusters)) break
-
-    clusters <- new_clusters
-
-  }
-
-  clusters
-
+is_single_integer <- function(n) {
+  is.numeric(n) && identical(length(n), 1L) && floor(n) == n
 }
 
+setGeneric("kmodes_gower", function(data, modes, max.iter=100) standardGeneric("kmodes_gower"))
 
+#' @export
+setMethod(
+  "kmodes_gower",
+  c("data.frame", "numeric"),
+  function(data, modes, max.iter) {
+    kmodes_gower(data, as.integer(modes[[1]]), max.iter)
+  })
 
-d <- read
+#' @export
+setMethod(
+  "kmodes_gower",
+  c("data.frame", "data.frame"),
+  function(data, modes, max.iter) {
+    kmodes_gower(data, split(modes, seq.int(nrow(modes))), max.iter)
+})
 
-for(i in 1:8) titanic <- rbind(titanic, titanic)
+#' @export
+setMethod(
+  "kmodes_gower",
+  c("data.frame", "integer"),
+  function(data, modes, max.iter) {
+    stopifnot(identical(length(modes), 1L))
+    i <- sample(which(!duplicated(data)), modes)
+    modes <- split(data[i,], seq.int(modes))
+    kmodes_gower(data, modes, max.iter)
+  })
 
+#' @export
+setMethod(
+  "kmodes_gower",
+  c("data.frame", "list"),
+  function(data, modes, max.iter) {
 
-d <- haven::read_sas("F:/sas-dev/SYNTH1801_0001/data/shell_perf_jefferson.sas7bdat")
+    ## check that list of modes are valid
+    ## TODO: check_modes_valid()
 
-X <- d[9:221]
+    clusters <- calculate_clusters(data, modes)
 
-res <- k_modes(X, 25)
+    repeat {
 
-plot(X, col=res)
+      modes <- update_modes(data, clusters)
+      new_clusters <- calculate_clusters(data, modes)
 
+      if (all(clusters == new_clusters)) break
 
-ksd <- data.frame(paid=d$paid, fpd=d$fpd_flag, cluster=ave(d$fpd_flag, res, FUN=function(x) mean(x, na.rm=T)))
+      clusters <- new_clusters
 
-library(ks)
+    }
 
-tbl <- ks_table(paid+fpd~cluster, data=ksd)
+    structure(
+      list(
+        clusters = clusters,
+        centers = modes),
+      class = "kmodes_gower")
 
+})
 
-
-
+#' @export
+predict.kmodes_gower <- function(object, newdata, type=c("cluster", "centers", "distance")) {
+  stop("Implement!")
+}
 

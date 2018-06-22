@@ -1,14 +1,14 @@
 Package: alamode
 Type: Package
-Title: K-Means on Sparse, Binary Data
+Title: K-Modes using Gower Distance
 Version: 0.1.0
 Author: Eric E. Graves
 Maintainer: Eric E. Graves <gravcon5@gmail.com>
-Description: Implements the K-Modes algorithm exclusively for sparse,
-    binary Matrices.
+Description: Implements the K-Modes algorithm for mixed data types using
+    gower distance.
 License: Proprietary
 Encoding: UTF-8
 LazyData: true
-Depends: Matrix
+Depends: gower
 RoxygenNote: 6.0.1
 Suggests: testthat
