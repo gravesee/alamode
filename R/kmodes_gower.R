@@ -27,14 +27,25 @@ update_mode.factor <- function(x) {
 
 calculate_gower_distance <- function(d, modes) lapply(modes, gower_dist, d)
 
-assign_clusters <- function(dists) {
-  ## TODO: Handle distance ties here
-  apply(do.call(cbind, dists), 1, which.min)
+all_dups <- function(x) duplicated(x) | duplicated(x, fromLast = TRUE)
+
+assign_clusters <- function(dists, current_clusters) {
+
+  dists <- do.call(cbind, dists)
+  mins <- apply(dists, 1, min)
+
+  ## candidate clusters
+  candidates <- apply(dists == mins, 1, which)
+  f <- mapply(`%in%`, current_clusters, candidates)
+
+  ## If current cluster is found in candidates, take it, otherwise
+  ## take a random cluster among the ties
+  ifelse(f, current_clusters, sapply(candidates, sample, 1L))
 }
 
-calculate_clusters <- function(d, modes) {
+calculate_clusters <- function(d, modes, current_clusters) {
   dists <- calculate_gower_distance(d, modes)
-  assign_clusters(dists)
+  assign_clusters(dists, current_clusters)
 }
 
 update_modes <- function(d, clusters) {
@@ -113,7 +124,7 @@ setMethod(
     }
 
     dists <- calculate_gower_distance(data, modes)
-    clusters <- assign_clusters(dists)
+    clusters <- assign_clusters(dists, 0)
 
     if (isTRUE(verbose)) cat("Iter   % Changed Cluster", sep = "\n")
 
@@ -121,7 +132,7 @@ setMethod(
     repeat {
       modes <- update_modes(data, clusters)
       dists <- calculate_gower_distance(data, modes)
-      new_clusters <- assign_clusters(dists)
+      new_clusters <- assign_clusters(dists, clusters)
 
       n_changed <- sum(clusters != new_clusters)
 

@@ -3,9 +3,10 @@
 
 library(titanic)
 X <- subset(titanic::titanic_train, select = c(Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked))
+X$Pclass <- factor(X$Pclass)
 
 ## request number of modes
-km <- kmodes_gower(X, 3L)
+km <- kmodes_gower(X[-1], 10L)
 
 plot(mtcars, col=km$clusters)
 
@@ -44,3 +45,5 @@ plot(p)
 
 km <- kmodes_gower(X[-1], 4)
 
+km1 <- kmodes_gower(iris[-5], 3)
+km2 <- kmeans(iris[-5], 3)
