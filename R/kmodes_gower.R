@@ -28,6 +28,7 @@ update_mode.factor <- function(x) {
 calculate_gower_distance <- function(d, modes) lapply(modes, gower_dist, d)
 
 assign_clusters <- function(dists) {
+  ## TODO: Handle distance ties here
   apply(do.call(cbind, dists), 1, which.min)
 }
 
@@ -79,14 +80,24 @@ setMethod(
     kmodes_gower(data, split(modes, seq.int(nrow(modes))), max.iter)
 })
 
+## For some reason, using `duplicated` to sample unique modes
+## was taking a very long time. This is much quicker in practice.
+sample_modes_without_duplicates <- function(data, k) {
+  repeat {
+    i <- sample.int(nrow(data), k)
+    modes <- data[i,]
+    if (!any(duplicated(modes))) break
+  }
+  split(modes, seq.int(k))
+}
+
 #' @export
 setMethod(
   "kmodes_gower",
   c("data.frame", "integer"),
   function(data, modes, max.iter, verbose) {
     stopifnot(identical(length(modes), 1L))
-    i <- sample(which(!duplicated(data)), modes)
-    modes <- split(data[i,], seq.int(modes))
+    modes <- sample_modes_without_duplicates(data, modes)
     kmodes_gower(data, modes, max.iter, verbose)
   })
 
