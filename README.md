@@ -22,45 +22,34 @@ average. For categorical data, this means taking the value that appears
 the most often. For numeric data, this is the median value. If there is
 a tie for the most frequent value, the first one is taken.
 
+    cats <- c("cyl","vs","am","gear","carb")
+    mtcars[cats] <- lapply(mtcars[cats], factor)
+
     km <- kmodes_gower(mtcars, 3)
 
     ## Iter   % Changed Cluster
-    ##   1               9.38
-    ##   2               3.12
-    ##   3               9.38
-    ##   4               6.25
-    ##   5               3.12
+    ##   1              34.38
+    ##   2              28.12
+    ##   3              15.62
+    ##   4               3.12
+    ##   5               9.38
     ##   6               9.38
-    ##   7               3.12
-    ##   8               3.12
-    ##   9               0.00
+    ##   7               0.00
 
-    km
+    show(km)
 
-    ## $clusters
-    ##  [1] 1 1 1 2 2 2 2 1 1 1 1 2 2 2 2 2 2 1 1 1 1 2 2 2 2 1 1 1 2 1 2 1
+    ## K-modes clustering with 3 clusters of sizes 14, 6, 12
     ## 
-    ## $modes
-    ## $modes[[1]]
-    ##    mpg cyl   disp hp drat     wt   qsec vs am gear carb
-    ## 1 22.8   4 120.65 96 3.92 2.5425 18.605  1  1    4    2
+    ## Cluster modes:
+    ##     mpg cyl   disp    hp  drat     wt  qsec vs am gear carb
+    ## 1 15.35   8 350.50 180.0 3.075 3.7550 17.35  0  0    3    4
+    ## 2 21.00   6 152.50 111.5 3.835 2.6950 16.58  0  1    5    2
+    ## 3 22.80   4 120.55  94.0 3.920 2.6225 19.17  1  0    4    1
     ## 
-    ## $modes[[2]]
-    ##     mpg cyl disp  hp drat   wt  qsec vs am gear carb
-    ## 1 15.35   8  334 180 3.08 3.65 17.35  0  0    3    3
+    ## Within cluster sum of distances by cluster
+    ## [1] 2.627523 1.683822 3.056213
     ## 
-    ## 
-    ## $sum_distance_total
-    ## [1] 8.562269
-    ## 
-    ## $sum_distance_within
-    ## [1] 6.400316
-    ## 
-    ## $distance_within_cluster
-    ## [1] 3.702761 2.697555
-    ## 
-    ## attr(,"class")
-    ## [1] "kmodes_gower"
+    ##  within_dist / total_dist = 65.9 %)
 
     plot(mtcars, col=km$clusters)
 
@@ -82,27 +71,27 @@ the rows of the distance matrix should sum to one.
 
     ## cluster
     ##  1  2 
-    ## 23  9
+    ## 24  8
 
     d1 <- predict(km, mtcars, type="distance", normalize=FALSE)
     d2 <- predict(km, mtcars, type="distance", normalize=TRUE)
 
     head(d1)
 
-    ##            [,1]      [,2]
-    ## [1,] 0.20857489 0.3465317
-    ## [2,] 0.20844162 0.3345437
-    ## [3,] 0.02497782 0.5289812
-    ## [4,] 0.29572347 0.2581926
-    ## [5,] 0.48396926 0.0448337
-    ## [6,] 0.32694250 0.2706686
+    ##           [,1]      [,2]      [,3]
+    ## [1,] 0.4308455 0.1897659 0.4149101
+    ## [2,] 0.4188575 0.1956697 0.4146606
+    ## [3,] 0.6457625 0.4179481 0.1101008
+    ## [4,] 0.3749739 0.4642582 0.2754273
+    ## [5,] 0.1216643 0.3998524 0.5343441
+    ## [6,] 0.3870310 0.4955948 0.3066464
 
     head(d2)
 
-    ##            [,1]       [,2]
-    ## [1,] 0.37573848 0.62426152
-    ## [2,] 0.38388075 0.61611925
-    ## [3,] 0.04508965 0.95491035
-    ## [4,] 0.53387775 0.46612225
-    ## [5,] 0.91521662 0.08478338
-    ## [6,] 0.54708238 0.45291762
+    ##           [,1]      [,2]       [,3]
+    ## [1,] 0.4160662 0.1832563 0.40067748
+    ## [2,] 0.4069787 0.1901205 0.40290081
+    ## [3,] 0.5501416 0.3560607 0.09379769
+    ## [4,] 0.3364022 0.4165023 0.24709549
+    ## [5,] 0.1152276 0.3786980 0.50607434
+    ## [6,] 0.3254352 0.4167211 0.25784372

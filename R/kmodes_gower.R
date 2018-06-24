@@ -200,6 +200,7 @@ predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"),
     })
 }
 
+#' @export
 setOldClass("kmodes_gower")
 
 #' @export
