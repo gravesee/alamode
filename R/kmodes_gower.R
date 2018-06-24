@@ -1,26 +1,33 @@
+#' @export
 update_mode <- function(x) UseMethod("update_mode")
 
+#' @export
 update_mode.default <- function(x) {
   stop("Update methods not implemented for data type:", class(x))
 }
 
+#' @export
 update_mode.data.frame <- function(x) {
   data.frame(lapply(x, update_mode), check.names = F, stringsAsFactors = F)
 }
 
+#' @export
 update_mode.numeric <- function(x) {
   median(x, na.rm=T)
 }
 
+#' @export
 update_mode.logical <- function(x) {
   if (mean(x) > 0.5) TRUE else FALSE
 }
 
+#' @export
 update_mode.character <- function(x) {
   tbl <- table(x)
   names(tbl)[which.max(tbl)]
 }
 
+#' @export
 update_mode.factor <- function(x) {
   factor(levels(x)[which.max(tabulate(x))], levels=levels(x))
 }
@@ -57,10 +64,14 @@ update_modes <- function(d, clusters) {
   modes
 }
 
-zeroth_row <- function(d) d[0,]
+zeroth_row <- function(d) {
+  res <- d[0,,drop=F]
+  row.names(res) <- NULL
+  res
+}
 
 modes_are_valid <- function(d, modes) {
-  proto <- d[0,]
+  proto <- zeroth_row(d)
   isTRUE(all(sapply(lapply(modes, zeroth_row), identical, proto)))
 }
 
