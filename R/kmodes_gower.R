@@ -181,7 +181,7 @@ predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"),
 
   switch(
     match.arg(type),
-    "cluster" = assign_clusters(dists),
+    "cluster" = assign_clusters(dists, 0),
     "distance" ={
       mat <- do.call(cbind, dists)
       if (isTRUE(normalize)) mat/rowSums(mat) else mat

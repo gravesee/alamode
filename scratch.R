@@ -47,3 +47,10 @@ km <- kmodes_gower(X[-1], 4)
 
 km1 <- kmodes_gower(iris[-5], 3)
 km2 <- kmeans(iris[-5], 3)
+
+
+i <- sample(nrow(iris), 75)
+km <- kmodes_gower(iris[i,-5], 3)
+
+dists <- predict(km, iris[-5])
+
