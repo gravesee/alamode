@@ -84,6 +84,7 @@ dist_to_clusters <- function(d, cluster, modes) {
   sums
 }
 
+#' @export
 setGeneric("kmodes_gower", function(data, modes, max.iter=100, verbose=TRUE) standardGeneric("kmodes_gower"))
 
 #' @export
@@ -201,6 +202,7 @@ predict.kmodes_gower <- function(object, newdata, type=c("cluster", "distance"),
 
 setOldClass("kmodes_gower")
 
+#' @export
 setMethod("show", "kmodes_gower", function(object) {
 
   sizes <- paste0(table(km$clusters), collapse = ", ")
@@ -218,4 +220,5 @@ setMethod("show", "kmodes_gower", function(object) {
   cat(txt, sep="\n")
 })
 
+#' @export
 print.kmodes_gower <- function(x, ...) show(x)
